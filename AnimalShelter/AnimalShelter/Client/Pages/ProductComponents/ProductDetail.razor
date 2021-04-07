@@ -1,0 +1,104 @@
+﻿@page "/productdetails"
+@page "/productdetails/{Id:int}"
+
+@using AnimalShelter.Shared
+@using AnimalShelter.Client.Services
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+<EditForm Model="@Product" OnValidSubmit="HandleValidSubmit">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="Product.Name" />
+        <ValidationMessage For="@(()=>Product.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="price">Price:</label>
+        <InputNumber id="price" @bind-Value="Product.Price" class="form-control" />
+        <ValidationMessage For="@(()=>Product.Price)" />
+    </div>
+
+    <div class="form-group">
+        <label for="vatPercentage">Vat Percentage:</label>
+        <InputNumber id="vatPercentage" @bind-Value="Product.VatPercentage" class="form-control" />
+        <ValidationMessage For="@(()=>Product.VatPercentage)" />
+    </div>
+
+    <div class="form-group">
+        <label for="netPrice">Net Price:</label>
+        <label id="netPrice" class="form-control">@Product.NetPrice</label>
+    </div>
+
+    <div class="form-group">
+        <label for="pictureUrl">Picture:</label>
+        <InputText id="pictureUrl" @bind-Value="Product.ProductImageUrl" class="form-control" />
+        <ValidationMessage For="@(()=>Product.ProductImageUrl)" />
+    </div>
+
+    <!--Load Picture-->
+    @if (!string.IsNullOrEmpty(Product.ProductImageUrl))
+    {
+        <div class="form-group">
+            <img src="@Product.ProductImageUrl" width="300" height="300" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="button" class="btn btn-secondary" @onclick="MoveToOverview">Back to overview</button>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    [Inject]
+    private NavigationManager NavManager { get; set; }
+
+    [Inject]
+    private IProductService ProductService { get; set; }
+
+    private Product Product { get; set; } = new Product();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(Id.HasValue)
+        {
+            Product = await ProductService.GetProduct(Id.Value);
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if(Id.HasValue)
+        {
+            await UpdateProduct();
+        }
+        else
+        {
+            await CreateProduct();
+        }
+    }
+
+    private async Task CreateProduct()
+    {
+        await ProductService.AddProduct(Product);
+        ///Go back to the list of products
+        MoveToOverview();
+    }
+    private async Task UpdateProduct()
+    {
+        await ProductService.Update(Product);
+        MoveToOverview();
+    }
+
+    private void MoveToOverview()
+    {
+        NavManager.NavigateTo("/productoverview");
+    }
+}

@@ -1,0 +1,30 @@
+﻿@using AnimalShelter.Shared
+
+<tr>
+    <td>@Product.Name</td>
+    <td>@Product.Price</td>
+    <td>@Product.VatPercentage</td>
+    <td>@Product.NetPrice</td>
+
+    <td><button type="button" class="btn btn-primary" @onclick="ShowDetails">Details</button> <button type="button" class="btn btn-danger" @onclick="BuyProduct">Delete</button></td>
+</tr>
+
+@code {
+    [Parameter]
+    public Product Product { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnProductBought { set; get; }
+
+    [Inject]
+    private NavigationManager NavManager { get; set; }
+
+    private async Task BuyProduct()
+    {
+        await OnProductBought.InvokeAsync(Product);
+    }
+
+    private void ShowDetails()
+    {
+        NavManager.NavigateTo($"/productdetails/{Product.Id}");
+    }
+}

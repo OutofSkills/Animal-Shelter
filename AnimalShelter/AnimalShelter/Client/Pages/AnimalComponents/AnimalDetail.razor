@@ -1,0 +1,119 @@
+﻿@page "/animaldetail"
+@page "/animaldetail/{Id:int}"
+
+@using AnimalShelter.Shared
+@using AnimalShelter.Client.Services
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+@inject IAnimalService AnimalService
+@inject NavigationManager NavManager
+
+<!--Animal Details Form-->
+<EditForm Model="@Animal" OnValidSubmit="HandleValidSubmit">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="Animal.Name" />
+        <ValidationMessage For="@(()=>Animal.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="dateOfBirth">Date of Birth:</label>
+        <InputDate id="dateOfBirth" @bind-Value="Animal.DateOfBirth" class="form-control" />
+        <ValidationMessage For="@(()=>Animal.DateOfBirth)" />
+    </div>
+
+    <div class="form-group">
+        <label for="estimatedAge">Estimated Age:</label>
+        <InputNumber id="estimatedAge" @bind-Value="Animal.EstimatedAge" class="form-control" />
+        <ValidationMessage For="@(()=>Animal.EstimatedAge)" />
+    </div>
+
+    <div class="form-group">
+        <label for="pictureUrl">Picture:</label>
+        <InputText id="pictureUrl" @bind-Value="Animal.PictureUrl" class="form-control" />
+        <ValidationMessage For="@(()=>Animal.PictureUrl)" />
+    </div>
+
+    <!--Load Picture-->
+    @if (!string.IsNullOrEmpty(Animal.PictureUrl))
+    {
+        <div class="form-group">
+            <img src="@Animal.PictureUrl" width="300" height="300" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label for="kindofanimal">Kind of animal:</label>
+        <InputSelect class="form-control" @bind-Value="Animal.AnimalKind">
+            @foreach (var kind in Enum.GetValues(typeof(AnimalKind)))
+            {
+                <option value="@kind">@kind</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label for="gender">Gender:</label>
+        <InputSelect class="form-control" @bind-Value="Animal.Gender">
+            @foreach (var gender in Enum.GetValues(typeof(Gender)))
+            {
+                <option value="@gender">@gender</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="button" class="btn btn-secondary" @onclick="MoveToOverview">Back to overview</button>
+</EditForm>
+
+@code {
+    private Animal Animal { get; set; } = new Animal();
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    async Task HandleValidSubmit()
+    {
+        if (Id.HasValue)
+        {
+            await UpdateAnimal();
+        }
+        else
+        {
+            await CreateAnimal();
+        }
+    }
+
+    private async Task CreateAnimal()
+    {
+        await AnimalService.AddAnimal(Animal);
+        //Go back to the animal list
+        MoveToOverview();
+    }
+
+    private async Task UpdateAnimal()
+    {
+        await AnimalService.Update(Animal);
+
+        MoveToOverview();
+    }
+
+    private void MoveToOverview()
+    {
+        NavManager.NavigateTo("/animaloverview");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(Id.HasValue)
+        {
+            Animal = await AnimalService.GetAnimal(Id.Value);
+        }
+    }
+}
